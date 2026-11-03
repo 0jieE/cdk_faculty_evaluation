@@ -1,0 +1,118 @@
+{% extends base_template %}{% load evaluation_extras %}
+{% block title %}{{ faculty_class.subject.subject_code }} results{% endblock %}
+{% block content %}
+{% with fc=faculty_class %}
+<a class="crumb" href="{% if own_view %}{% url 'faculty:home' %}?semester={{ fc.semester_id }}{% else %}{% url 'staff:faculty_results' fc.faculty_id %}?semester={{ fc.semester_id }}{% endif %}">
+  {% if own_view %}All my classes{% else %}{{ fc.faculty.user|full_name }}{% endif %}</a>
+<div class="page-head">
+  <div>
+    <h1>{{ fc.subject.subject_code }}, {{ fc.program.short_name }} {{ fc.year_level.year_level }}{{ fc.section.section }}</h1>
+    <p>{{ fc.subject.description }}. {% if not own_view %}{{ fc.faculty.user|full_name }}, {% endif %}{{ fc.semester.school_year }}, {{ fc.semester.get_semester_display }}.</p>
+  </div>
+  <div class="row no-print">
+    {% if released and result.evaluators %}
+      <a class="btn" hx-boost="false" href="{% if own_view %}{% url 'faculty:class_pdf' fc.id %}{% else %}{% url 'staff:class_pdf' fc.id %}{% endif %}">Download report (PDF)</a>
+    {% endif %}
+    {% if not own_view %}<a class="btn" href="{% url 'staff:class' fc.id %}">Enrollment</a>{% endif %}
+  </div>
+</div>
+
+{% if not released %}
+  <div class="panel empty"><h3>Results aren't released yet</h3><p>You'll see this class's results once your school releases them.</p></div>
+{% elif not result.evaluators %}
+  <div class="panel empty">
+    <h3>No responses yet</h3>
+    <p>{{ result.enrolled }} student{{ result.enrolled|pluralize }} enrolled; none has submitted an evaluation for this class.</p>
+  </div>
+{% else %}
+  <section class="panel panel-pad hero" aria-label="Class rating">
+    {% include "includes/seal.html" with rating=result.avg_rating size="sm" %}
+    <div class="hero-text">
+      <div class="figures" style="margin-top:0">
+        <div class="figure"><strong>{{ result.evaluators }} of {{ result.enrolled }}</strong><span>students responded{% if result.response_rate is not None %} ({{ result.response_rate }}%){% endif %}</span></div>
+        <div class="figure"><strong>{{ result.avg_is|score }}</strong><span>average inventory score</span></div>
+        <div class="figure"><strong>{{ result.avg_ra|score }}</strong><span>average rapid appraisal</span></div>
+      </div>
+      <div style="margin-top: 1.5rem;">
+        <div class="label" id="dist-title">How students rated this class</div>
+        <div class="segbar" role="img" aria-labelledby="dist-title" aria-describedby="dist-legend" style="margin-top:.5rem">
+          {% for code, label, count in result.distribution %}{% if count %}
+          <span class="b{{ forloop.counter }}" style="flex: {{ count }} 1 0" title="{{ label }}: {{ count }} student{{ count|pluralize }}">{{ count }}</span>
+          {% endif %}{% endfor %}
+        </div>
+        <div class="legend" id="dist-legend">
+          {% for code, label, count in result.distribution %}<span><i class="b{{ forloop.counter }}"></i>{{ label }} ({{ count }})</span>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {% if result.is_statements %}
+  <div class="section-head"><h2>Inventory statements</h2><span class="small muted">Average on a 1–5 scale. Negatively worded statements are reversed, so higher is always better.</span></div>
+  <div class="panel panel-pad">
+    <ol class="statements">
+      {% for s in result.is_statements %}
+      <li>
+        <span class="n">{{ s.number }}.</span>
+        <span>{{ s.text }}{% if not s.is_positive %} <span class="tag">(reversed)</span>{% endif %}</span>
+        <div class="bar-cell" title="Statement {{ s.number }}: {{ s.average|score }} of 5">
+          <div class="bar-track"><span style="width: {{ s.average|percent_of:5 }}%"></span></div>
+          <span class="bar-value">{{ s.average|score }}</span>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  {% if result.ras_statements %}
+  <div class="section-head"><h2>Rapid appraisal</h2><span class="small muted">Average on a 6–10 scale.</span></div>
+  <div class="panel panel-pad">
+    <ol class="statements">
+      {% for s in result.ras_statements %}
+      <li>
+        <span class="n">{{ s.number }}.</span>
+        <span>{{ s.text }}</span>
+        <div class="bar-cell" title="{{ s.average|score }} of 10">
+          <div class="bar-track"><span style="width: {{ s.average|percent_of:10 }}%"></span></div>
+          <span class="bar-value">{{ s.average|score }}</span>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+  </div>
+  {% endif %}
+
+  <div class="section-head"><h2>Comments</h2><span class="small muted">{{ result.comments|length }} written</span></div>
+  {% if result.comments %}
+  <ul class="comment-list">
+    {% for author, text in result.comments %}
+    <li>{% if author %}<span class="by">{{ author }}</span>{% endif %}<p>{{ text }}</p></li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">No student wrote a comment for this class.</p>
+  {% endif %}
+
+  {% if not own_view %}
+  <div class="section-head"><h2>Submissions</h2>{% if not show_names %}<span class="small muted">Student names are hidden. <a href="{% url 'staff:settings' %}">Change in settings</a></span>{% endif %}</div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Student</th><th class="num">Inventory</th><th class="num">Rapid appraisal</th><th class="num">Rating</th><th>Submitted</th></tr></thead>
+      <tbody>
+        {% for s in result.submissions %}
+        <tr>
+          <td>{% if show_names %}{{ s.student.user|full_name }}{% else %}Anonymous{% endif %}</td>
+          <td class="num">{{ s.isscore_total }}</td>
+          <td class="num">{{ s.rasscore_total }}</td>
+          <td class="num">{{ s.rating|score }}</td>
+          <td class="nowrap">{{ s.submitted_at|date:"M j, Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+{% endif %}
+{% endwith %}
+{% endblock %}

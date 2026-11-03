@@ -1,0 +1,13 @@
+{% extends "staff/layout.html" %}
+{% block title %}Search{% if q %}: {{ q }}{% endif %}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Search</h1>
+    <p>{% if q|length >= 2 %}Results for “{{ q }}”.{% else %}Type at least two letters in the search bar above: a name, an ID number or a subject code.{% endif %}</p>
+  </div>
+</div>
+{% if q|length >= 2 %}
+<div class="panel search-page">{% include "staff/includes/search_results.html" %}</div>
+{% endif %}
+{% endblock %}

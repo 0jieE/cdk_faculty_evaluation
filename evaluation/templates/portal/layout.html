@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% load static evaluation_extras %}
+{% block body %}
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{% url 'index' %}">
+      <img src="{% static 'img/cdk_logo.jpg' %}" alt="">
+      <span><strong>Faculty evaluation</strong><span>Colegio de Kidapawan</span></span>
+    </a>
+    <nav aria-label="Main">
+      {% if is_student_user %}<a href="{% url 'student:home' %}" {% if request.resolver_match.app_name == "student" %}aria-current="page"{% endif %}>My classes</a>{% endif %}
+      {% if is_faculty_user %}<a href="{% url 'faculty:home' %}" {% if request.resolver_match.app_name == "faculty" %}aria-current="page"{% endif %}>My results</a>{% endif %}
+      {% if is_staff_user %}<a href="{% url 'staff:dashboard' %}">Staff area</a>{% endif %}
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-sm" type="submit">Sign out</button></form>
+    </nav>
+  </div>
+</header>
+<main class="portal-main" id="main">
+  {% include "includes/messages.html" %}
+  {% block content %}{% endblock %}
+</main>
+{% endblock %}

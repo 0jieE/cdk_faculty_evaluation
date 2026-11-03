@@ -1,0 +1,14 @@
+{% if page.paginator.count %}
+<nav class="pagination" aria-label="Pages">
+  <span class="muted small">
+    Showing {{ page.start_index }}–{{ page.end_index }} of {{ page.paginator.count }}
+  </span>
+  {% if page.has_other_pages %}
+  <span class="row">
+    {% if page.has_previous %}<a class="btn btn-sm" href="?{% if params %}{{ params }}&amp;{% endif %}page={{ page.previous_page_number }}">Previous</a>{% endif %}
+    <span class="small">Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+    {% if page.has_next %}<a class="btn btn-sm" href="?{% if params %}{{ params }}&amp;{% endif %}page={{ page.next_page_number }}">Next</a>{% endif %}
+  </span>
+  {% endif %}
+</nav>
+{% endif %}

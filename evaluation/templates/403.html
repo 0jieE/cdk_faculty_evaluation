@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Not available{% endblock %}
+{% block body %}
+<main class="portal-main">
+  <div class="panel empty">
+    <h3>This page isn't part of your account</h3>
+    <p>You're signed in as {{ request.user.username }}, which doesn't have access here. Go back to your own pages, or sign in with a different account.</p>
+    <div class="row" style="justify-content:center">
+      <a class="btn btn-primary" href="{% url 'index' %}">Go to my pages</a>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn" type="submit">Sign in as someone else</button></form>
+    </div>
+  </div>
+</main>
+{% endblock %}

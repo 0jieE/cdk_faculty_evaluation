@@ -1,0 +1,58 @@
+{% extends "staff/layout.html" %}{% load evaluation_extras %}
+{% block title %}Classes{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Classes</h1><p>A class is a subject taught by one instructor to one section in a semester. Students evaluate classes they're enrolled in.</p></div>
+  <a class="btn btn-primary" href="{% url 'staff:class_add' %}">Add a class</a>
+</div>
+
+{% if semester %}
+<form method="get" class="toolbar" role="search"
+      hx-get="{% url 'staff:classes' %}" hx-trigger="input changed delay:300ms from:#q, change" hx-target="#results" hx-select="#results" hx-swap="outerHTML" hx-push-url="true">
+  <div class="field"><label for="f-sem">Semester</label>
+    <select class="select" id="f-sem" name="semester">
+      {% for s in semesters %}<option value="{{ s.id }}"{% if s == semester %} selected{% endif %}>{{ s.school_year }}, {{ s.get_semester_display }}{% if s.is_active %} (active){% endif %}</option>{% endfor %}</select></div>
+  <div class="field search"><label for="q">Search</label><input class="input" id="q" type="search" name="q" value="{{ q }}" placeholder="Subject or instructor" autocomplete="off"></div>
+  <div class="field"><label for="f-prog">Program</label>
+    <select class="select" id="f-prog" name="program"><option value="">All</option>
+      {% for p in programs %}<option value="{{ p.id }}"{% if program == p.id %} selected{% endif %}>{{ p.short_name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="f-fac">Instructor</label>
+    <select class="select" id="f-fac" name="faculty"><option value="">All</option>
+      {% for f in faculty_members %}<option value="{{ f.id }}"{% if faculty == f.id %} selected{% endif %}>{{ f.user.last_name }}, {{ f.user.first_name }}</option>{% endfor %}</select></div>
+  <noscript><button class="btn" type="submit">Filter</button></noscript>
+</form>
+{% endif %}
+
+<div id="results">
+  {% if page.object_list %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Subject</th><th>Instructor</th><th>Class</th><th class="num">Enrolled</th><th>Evaluated</th></tr></thead>
+      <tbody>
+      {% for c in page %}
+        <tr>
+          <td><a class="row-link" href="{% url 'staff:class' c.id %}">{{ c.subject.subject_code }}</a><span class="sub">{{ c.subject.description }}</span></td>
+          <td>{{ c.faculty.user|full_name }}</td>
+          <td class="nowrap">{{ c.program.short_name }} {{ c.year_level.year_level }}{{ c.section.section }}</td>
+          <td class="num">{% if c.enrolled %}{{ c.enrolled }}{% else %}<span class="status status-pending">None</span>{% endif %}</td>
+          <td>{% if c.enrolled %}
+            <div class="bar-cell" title="{{ c.evaluated }} of {{ c.enrolled }}" style="min-width:8rem">
+              <div class="meter" style="flex:1"><span style="width: {{ c.evaluated|percent_of:c.enrolled }}%"></span></div>
+              <span class="small num nowrap">{{ c.evaluated }}/{{ c.enrolled }}</span>
+            </div>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/pagination.html" %}
+  {% else %}
+  <div class="panel empty">
+    {% if q or program or faculty %}<h3>No classes match</h3><p>Try fewer filters.</p><a class="btn" href="{% url 'staff:classes' %}?semester={{ semester.id }}">Clear filters</a>
+    {% else %}<h3>No classes{% if semester %} in {{ semester.school_year }}, {{ semester.get_semester_display }}{% endif %}</h3>
+      <p>Add a class for each subject, instructor and section. You'll need subjects and faculty first.</p>
+      <a class="btn btn-primary" href="{% url 'staff:class_add' %}">Add a class</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "staff/layout.html" %}{% load evaluation_extras %}
+{% block title %}{% if obj %}Edit {{ noun }}{% else %}Add a {{ noun }}{% endif %}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ cancel_url }}">Back</a>
+<div class="page-head">
+  <div><h1>{% if obj %}Edit {{ obj.user|default:obj|full_name }}{% else %}Add a {{ noun }}{% endif %}</h1>
+  {% if not obj %}<p>{% if noun == "student" %}Regular students are enrolled automatically in their section's classes for the active semester.{% elif noun == "staff account" %}Staff can manage students, faculty, classes and results.{% else %}After adding, assign classes to them from the Classes page.{% endif %}</p>{% endif %}</div>
+</div>
+<form method="post" class="panel panel-pad">
+  {% csrf_token %}
+  {% for form in forms %}
+  <section class="form-section">
+    <h2>{% if forloop.first %}Account{% elif noun == "student" %}Enrollment{% else %}Department{% endif %}</h2>
+    {% include "includes/form_fields.html" %}
+  </section>
+  {% endfor %}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{% if obj %}Save changes{% else %}Add {{ noun }}{% endif %}</button>
+    <a class="btn btn-quiet" href="{{ cancel_url }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

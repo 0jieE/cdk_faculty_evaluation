@@ -1,0 +1,36 @@
+{% load evaluation_extras %}
+{% if overview %}
+<div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Instructor</th><th class="num">Classes</th><th>Responses</th><th>Rating (0–100)</th><th>Equivalent</th><th class="actions"><span class="visually-hidden">Report</span></th></tr></thead>
+    <tbody>
+    {% for s in overview %}
+      <tr>
+        <td><a class="row-link" href="{% url 'staff:faculty_results' s.faculty.id %}?semester={{ semester.id }}">{{ s.faculty.user|full_name }}</a><span class="sub">{{ s.faculty.department }}</span></td>
+        <td class="num">{{ s.classes|length }}</td>
+        <td>
+          <div class="bar-cell" title="{{ s.evaluators }} of {{ s.enrolled }} responded" style="min-width: 8rem">
+            <div class="meter" style="flex:1"><span style="width: {{ s.evaluators|percent_of:s.enrolled }}%"></span></div>
+            <span class="small num nowrap">{{ s.evaluators }}/{{ s.enrolled }}</span>
+          </div>
+        </td>
+        <td>
+          <div class="bar-cell" title="{{ s.faculty.user|full_name }}: {{ s.avg_rating|score }}">
+            <div class="bar-track">{% if s.avg_rating is not None %}<span style="width: {{ s.avg_rating|percent_of:100 }}%"></span>{% endif %}</div>
+            <span class="bar-value">{{ s.avg_rating|score }}</span>
+          </div>
+        </td>
+        <td>{{ s.avg_rating|grade|default:"–" }}</td>
+        <td class="actions">{% if s.evaluators %}<a class="btn btn-sm" hx-boost="false" href="{% url 'staff:faculty_pdf' s.faculty.id %}?semester={{ semester.id }}">PDF</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="panel empty">
+  <h3>No classes yet</h3>
+  <p>Faculty appear here once they have classes in this semester.</p>
+  <a class="btn btn-primary" href="{% url 'staff:class_add' %}">Add a class</a>
+</div>
+{% endif %}

@@ -1,0 +1,108 @@
+{% extends "staff/layout.html" %}{% load evaluation_extras %}
+{% block title %}{{ student.user|full_name }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{% url 'staff:students' %}">All students</a>
+<div class="page-head">
+  <div>
+    <h1>{{ student.user|full_name }}</h1>
+    <p>{{ student.program.short_name }} {{ student.year.year_level }}{{ student.section.section }}, {% if student.is_regular %}regular{% else %}irregular{% endif %} student.
+      {% if not student.user.is_active %}<span class="status status-off">Sign-in turned off</span>{% endif %}</p>
+  </div>
+  <div class="row">
+    <a class="btn" href="{% url 'staff:student_edit' student.id %}">Edit details</a>
+    <a class="btn" href="{% url 'staff:student_password' student.id %}">Set a new password</a>
+  </div>
+</div>
+
+{% if same_id %}
+<div class="notice notice-warn" role="note">
+  <p><strong>{{ same_id|length }} other account{{ same_id|length|pluralize }} use{{ same_id|length|pluralize:"s," }} ID number {{ student.id_number }}.</strong>
+    Students sign in with their ID number, so keep one account per student: turn off sign-in for (or delete) the extra one, or correct the ID number if it was mistyped.</p>
+  <ul>
+    {% for other in same_id %}
+    <li><a href="{% url 'staff:student' other.id %}">{{ other.user.last_name }}, {{ other.user.first_name }}</a>,
+      {{ other.program.short_name }} {{ other.year.year_level }}{{ other.section.section }},
+      {{ other.submissions }} evaluation{{ other.submissions|pluralize }}{% if other.user.last_login %}, last signed in {{ other.user.last_login|date:"M j, Y" }}{% else %}, never signed in{% endif %}{% if not other.user.is_active %}, sign-in off{% endif %}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<dl class="facts panel panel-pad">
+  <dt>ID number</dt><dd>{{ student.id_number }} <span class="muted small">(signs in with this)</span></dd>
+  <dt>Program</dt><dd>{{ student.program }}</dd>
+  <dt>Department</dt><dd>{{ student.department }}</dd>
+  <dt>Last signed in</dt><dd>{% if student.user.last_login %}{{ student.user.last_login|date:"M j, Y" }}{% else %}Never{% endif %}{% if not student.user.is_active %}, sign-in is off{% endif %}</dd>
+</dl>
+
+<div class="section-head">
+  <h2>Classes {% if semester %}in {{ semester.school_year }}, {{ semester.get_semester_display }}{% endif %}</h2>
+  {% if semester and student.is_regular %}
+  <form method="post" action="{% url 'staff:student_enroll' student.id %}">{% csrf_token %}
+    <input type="hidden" name="action" value="section">
+    <button class="btn btn-sm" type="submit">Enroll in {{ student.program.short_name }} {{ student.year.year_level }}{{ student.section.section }} classes</button>
+  </form>
+  {% endif %}
+</div>
+
+{% if not semester %}
+  <div class="panel empty"><h3>No active semester</h3><p>Enrollment is per semester. Activate a semester first.</p></div>
+{% elif enrollments %}
+<div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Subject</th><th>Instructor</th><th>Class</th><th>Evaluation</th><th class="actions"><span class="visually-hidden">Remove</span></th></tr></thead>
+    <tbody>
+    {% for e, done in enrollments %}{% with fc=e.faculty_class %}
+      <tr>
+        <td><strong>{{ fc.subject.subject_code }}</strong><span class="sub">{{ fc.subject.description }}</span></td>
+        <td>{{ fc.faculty.user|full_name }}</td>
+        <td class="nowrap">{{ fc.program.short_name }} {{ fc.year_level.year_level }}{{ fc.section.section }}</td>
+        <td>{% if done %}<span class="status status-done">Evaluated</span>{% else %}<span class="status status-pending">Not yet</span>{% endif %}</td>
+        <td class="actions">{% if not done %}
+          <form method="post" action="{% url 'staff:student_unenroll' student.id e.id %}">{% csrf_token %}
+            <button class="btn btn-sm btn-quiet" type="submit" data-confirm="Remove {{ student.user.first_name }} from {{ fc.subject.subject_code }}?">Remove</button></form>
+        {% endif %}</td>
+      </tr>
+    {% endwith %}{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+  <div class="panel empty"><h3>Not enrolled in any class</h3><p>Pick classes below{% if student.is_regular %}, or enroll them in every class of their section with the button above{% endif %}.</p></div>
+{% endif %}
+
+{% if semester %}
+<div class="section-head"><h2>Add classes</h2><span class="small muted">Classes of {{ student.program.short_name }} {{ student.year.year_level }}{{ student.section.section }} are listed first.</span></div>
+<form method="get" class="toolbar" role="search">
+  <div class="field search"><label for="q">Find a class</label><input class="input" id="q" type="search" name="q" value="{{ q }}" placeholder="Subject code, description or instructor"></div>
+  <button class="btn" type="submit">Search</button>
+</form>
+{% if available %}
+<form method="post" action="{% url 'staff:student_enroll' student.id %}">
+  {% csrf_token %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th><span class="visually-hidden">Select</span></th><th>Subject</th><th>Instructor</th><th>Class</th></tr></thead>
+      <tbody>
+      {% for fc in available|slice:":50" %}
+        <tr>
+          <td style="width:2.5rem"><input class="check" type="checkbox" name="class_ids" value="{{ fc.id }}" id="c{{ fc.id }}" aria-label="Enroll in {{ fc.subject.subject_code }} with {{ fc.faculty.user|full_name }}"></td>
+          <td><label for="c{{ fc.id }}"><strong>{{ fc.subject.subject_code }}</strong><span class="sub">{{ fc.subject.description }}</span></label></td>
+          <td>{{ fc.faculty.user|full_name }}</td>
+          <td class="nowrap">{{ fc.program.short_name }} {{ fc.year_level.year_level }}{{ fc.section.section }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if available|length > 50 %}<p class="small muted" style="margin-top:.5rem">Showing 50 of {{ available|length }}. Search to narrow the list.</p>{% endif %}
+  <div class="form-actions"><button class="btn btn-primary" type="submit">Enroll in selected classes</button></div>
+</form>
+{% else %}
+<p class="muted">{% if q %}No classes match “{{ q }}”.{% else %}This student is already in every class this semester.{% endif %}</p>
+{% endif %}
+{% endif %}
+
+<div class="section-head"><h2>Account</h2></div>
+<a class="btn btn-sm btn-quiet" href="{% url 'staff:student_delete' student.id %}">Delete student</a>
+{% endblock %}

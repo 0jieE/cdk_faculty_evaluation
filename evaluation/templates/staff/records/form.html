@@ -1,0 +1,14 @@
+{% extends "staff/layout.html" %}
+{% block title %}{% if obj %}Edit {{ record.singular }}{% else %}Add a {{ record.singular }}{% endif %}{% endblock %}
+{% block content %}
+<a class="crumb" href="{% url 'staff:records' kind %}">{{ record.title }}</a>
+<div class="page-head"><div><h1>{% if obj %}Edit {{ obj }}{% else %}Add a {{ record.singular }}{% endif %}</h1></div></div>
+<form method="post" class="panel panel-pad" style="max-width: 48rem">
+  {% csrf_token %}
+  {% include "includes/form_fields.html" %}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{% if obj %}Save changes{% else %}Add {{ record.singular }}{% endif %}</button>
+    <a class="btn btn-quiet" href="{% url 'staff:records' kind %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

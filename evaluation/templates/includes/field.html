@@ -1,0 +1,17 @@
+{% load evaluation_extras %}{% with kind=field|field_type %}
+{% if kind == "CheckboxInput" %}
+<div class="check-field{% if field.errors %} field-invalid{% endif %}{% if span %} span-all{% endif %}">
+  {{ field }}
+  <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+  {% if field.help_text %}<span class="help" id="{{ field.auto_id }}_help">{{ field.help_text }}</span>{% endif %}
+  {% if field.errors %}<ul class="errors">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+</div>
+{% else %}
+<div class="field{% if field.errors %} field-invalid{% endif %}{% if span or kind == 'Textarea' %} span-all{% endif %}">
+  <label for="{{ field.id_for_label }}">{{ field.label }}{% if not field.field.required %} <span class="muted small">(optional)</span>{% endif %}</label>
+  {{ field }}
+  {% if field.errors %}<ul class="errors">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>{% endif %}
+  {% if field.help_text %}<span class="help" id="{{ field.auto_id }}_help">{{ field.help_text|safe }}</span>{% endif %}
+</div>
+{% endif %}
+{% endwith %}

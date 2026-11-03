@@ -1,0 +1,57 @@
+{% extends "base.html" %}{% load static %}
+{% block title %}Create a student account{% endblock %}
+{% block body %}
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="{% url 'login' %}">
+      <img src="{% static 'img/cdk_logo.jpg' %}" alt="">
+      <span><strong>Faculty evaluation</strong><span>Colegio de Kidapawan</span></span>
+    </a>
+    <nav><a href="{% url 'login' %}">Sign in</a></nav>
+  </div>
+</header>
+<main class="portal-main">
+  <div class="panel panel-pad" style="max-width: 46rem; margin: 0 auto;">
+    <h1>Create a student account</h1>
+    <p class="muted" style="margin: .4rem 0 2rem;">Enter your details exactly as they appear on your school records.</p>
+    {% include "includes/messages.html" %}
+    <form method="post">
+      {% csrf_token %}
+      {% if account_form.non_field_errors or profile_form.non_field_errors %}
+      <div class="form-errors">{% for e in account_form.non_field_errors %}<p>{{ e }}</p>{% endfor %}{% for e in profile_form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div>
+      {% endif %}
+      <section class="form-section">
+        <h2>Sign-in details</h2>
+        <p class="muted">You'll sign in with your school ID number and this password.</p>
+        <div class="form-grid">
+          {% include "includes/field.html" with field=profile_form.id_number span=True %}
+          {% include "includes/field.html" with field=account_form.password1 %}
+          {% include "includes/field.html" with field=account_form.password2 %}
+        </div>
+      </section>
+      <section class="form-section">
+        <h2>Your name</h2>
+        <div class="form-grid">
+          {% include "includes/field.html" with field=account_form.first_name %}
+          {% include "includes/field.html" with field=account_form.middle_name %}
+          {% include "includes/field.html" with field=account_form.last_name %}
+          {% include "includes/field.html" with field=account_form.extension_name %}
+        </div>
+      </section>
+      <section class="form-section">
+        <h2>Your enrollment</h2>
+        <div class="form-grid">
+          {% include "includes/field.html" with field=profile_form.program span=True %}
+          {% include "includes/field.html" with field=profile_form.year %}
+          {% include "includes/field.html" with field=profile_form.section %}
+          {% include "includes/field.html" with field=profile_form.is_regular span=True %}
+        </div>
+      </section>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Create account</button>
+        <a class="btn btn-quiet" href="{% url 'login' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

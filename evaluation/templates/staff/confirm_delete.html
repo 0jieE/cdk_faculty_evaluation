@@ -1,0 +1,28 @@
+{% extends "staff/layout.html" %}
+{% block title %}Delete {{ noun }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ cancel_url }}">Back</a>
+<div class="page-head"><div><h1>{% if blocked_reason %}Can't delete this {{ noun }}{% else %}Delete this {{ noun }}?{% endif %}</h1>
+  <p>“{{ obj }}”</p></div></div>
+<div class="panel panel-pad" style="max-width: 44rem">
+  {% if blocked_reason %}
+    <p>{{ blocked_reason }}</p>
+    {% if usage %}
+    <ul style="margin: 1rem 0 0">{% for label, count in usage %}<li>{{ count }} {{ label }}</li>{% endfor %}</ul>
+    {% endif %}
+    <div class="form-actions"><a class="btn" href="{{ cancel_url }}">Go back</a></div>
+  {% else %}
+    {% if usage %}
+    <p>These will be deleted along with it:</p>
+    <ul style="margin: .75rem 0 0">{% for label, count in usage %}<li>{{ count }} {{ label }}</li>{% endfor %}</ul>
+    {% else %}
+    <p>Nothing else uses it. This can't be undone.</p>
+    {% endif %}
+    <form method="post" class="form-actions">
+      {% csrf_token %}
+      <button class="btn btn-danger" type="submit">Delete {{ noun }}</button>
+      <a class="btn btn-quiet" href="{{ cancel_url }}">Cancel</a>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

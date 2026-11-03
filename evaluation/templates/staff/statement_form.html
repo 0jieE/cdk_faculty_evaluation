@@ -1,0 +1,18 @@
+{% extends "staff/layout.html" %}
+{% block title %}{% if obj %}Edit statement{% else %}Add a statement{% endif %}{% endblock %}
+{% block content %}
+<a class="crumb" href="{{ cancel_url }}">Questionnaire</a>
+<div class="page-head"><div>
+  <h1>{% if obj %}Edit {{ noun }}{% else %}Add {{ noun }}{% endif %}</h1>
+  <p>For {{ semester.school_year }}, {{ semester.get_semester_display }}.</p>
+</div></div>
+<form method="post" class="panel panel-pad" style="max-width: 48rem">
+  {% csrf_token %}
+  {% include "includes/form_fields.html" %}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{% if obj %}Save changes{% else %}Add statement{% endif %}</button>
+    {% if not obj %}<button class="btn" type="submit" name="add_another" value="1">Add and write another</button>{% endif %}
+    <a class="btn btn-quiet" href="{{ cancel_url }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

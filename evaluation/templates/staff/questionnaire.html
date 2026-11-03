@@ -1,0 +1,81 @@
+{% extends "staff/layout.html" %}
+{% block title %}Questionnaire{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Questionnaire</h1><p>Each semester has its own statements. Students answer every one of them for each class.</p></div>
+  {% if semesters %}{% include "includes/semester_picker.html" %}{% endif %}
+</div>
+
+{% if not semester %}
+<div class="panel empty"><h3>No semesters yet</h3><p>Add a semester first; statements belong to a semester.</p>
+  <a class="btn btn-primary" href="{% url 'staff:record_add' 'semesters' %}">Add a semester</a></div>
+{% else %}
+
+{% if sources %}
+<form method="post" action="{% url 'staff:questionnaire_copy' %}" class="panel panel-pad row-between" style="margin-bottom: 1rem">
+  {% csrf_token %}
+  <input type="hidden" name="target" value="{{ semester.id }}">
+  <p>{% if inventory or appraisal %}Copy any missing statements from another semester.{% else %}This semester has no statements yet. Start from a previous semester's questionnaire.{% endif %}</p>
+  <div class="row">
+    <label class="visually-hidden" for="source">Copy from</label>
+    <select class="select" id="source" name="source" style="width:auto">
+      {% for s in sources %}<option value="{{ s.id }}">{{ s.school_year }}, {{ s.get_semester_display }}</option>{% endfor %}
+    </select>
+    <button class="btn{% if not inventory and not appraisal %} btn-primary{% endif %}" type="submit">Copy statements</button>
+  </div>
+</form>
+{% endif %}
+
+<div class="section-head">
+  <h2>Inventory statements <span class="muted small">({{ inventory|length }}, answered 1–5)</span></h2>
+  <a class="btn btn-sm" href="{% url 'staff:statement_add' 'inventory' semester.id %}">Add a statement</a>
+</div>
+{% if inventory %}
+<div class="table-wrap">
+  <table class="table">
+    <thead><tr><th class="num">#</th><th>Statement</th><th>Wording</th><th class="num">Answers</th><th class="actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+    <tbody>
+    {% for s in inventory %}
+      <tr>
+        <td class="num muted">{{ forloop.counter }}</td>
+        <td>{{ s.statement }}</td>
+        <td>{% if s.is_positive %}Positive{% else %}<span class="status status-seal">Negative, reversed</span>{% endif %}</td>
+        <td class="num">{{ s.answers }}</td>
+        <td class="actions"><a class="btn btn-sm" href="{% url 'staff:statement_edit' 'inventory' semester.id s.id %}">Edit</a>
+          {% if not s.answers %}<a class="btn btn-sm btn-quiet" href="{% url 'staff:statement_delete' 'inventory' s.id %}">Delete</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p class="muted">No inventory statements for this semester.</p>{% endif %}
+
+<div class="section-head">
+  <h2>Rapid appraisal <span class="muted small">({{ appraisal|length }}, answered 6–10, with an optional comment)</span></h2>
+  <a class="btn btn-sm" href="{% url 'staff:statement_add' 'appraisal' semester.id %}">Add a statement</a>
+</div>
+{% if appraisal %}
+<div class="table-wrap">
+  <table class="table">
+    <thead><tr><th class="num">#</th><th>Statement</th><th class="num">Answers</th><th class="actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+    <tbody>
+    {% for s in appraisal %}
+      <tr>
+        <td class="num muted">{{ forloop.counter }}</td>
+        <td>{{ s.statement }}</td>
+        <td class="num">{{ s.answers }}</td>
+        <td class="actions"><a class="btn btn-sm" href="{% url 'staff:statement_edit' 'appraisal' semester.id s.id %}">Edit</a>
+          {% if not s.answers %}<a class="btn btn-sm btn-quiet" href="{% url 'staff:statement_delete' 'appraisal' s.id %}">Delete</a>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}<p class="muted">No rapid appraisal statements for this semester.</p>{% endif %}
+
+<p class="small muted" style="margin-top: 2rem; max-width: 70ch">
+  Ratings are computed as 90% of the inventory total plus the rapid appraisal total, so the scale reaches 100 with
+  20 inventory statements and 1 rapid appraisal statement. Editing a statement after students answered changes the wording only, not their scores.
+</p>
+{% endif %}
+{% endblock %}

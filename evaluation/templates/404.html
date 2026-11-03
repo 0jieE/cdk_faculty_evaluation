@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Page not found{% endblock %}
+{% block body %}
+<main class="portal-main">
+  <div class="panel empty">
+    <h3>That page doesn't exist</h3>
+    <p>The link may be old, or the record was deleted.</p>
+    <a class="btn btn-primary" href="{% url 'index' %}">Go to my pages</a>
+  </div>
+</main>
+{% endblock %}

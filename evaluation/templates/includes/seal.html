@@ -1,0 +1,9 @@
+{% load evaluation_extras %}{# The school seal holding a rating. Args: rating, size ("sm" or empty) #}
+<div class="seal{% if size %} seal-{{ size }}{% endif %}{% if rating is None %} seal-empty{% endif %}"
+     role="img" aria-label="{% if rating is None %}No rating yet{% else %}Rating {{ rating|score }}, {{ rating|grade }}{% endif %}">
+  <svg viewBox="0 0 100 100" aria-hidden="true"><path d="M50.00 6.50 Q64.49 -4.07 71.75 12.33 Q89.59 10.41 87.67 28.25 Q104.07 35.51 93.50 50.00 Q104.07 64.49 87.67 71.75 Q89.59 89.59 71.75 87.67 Q64.49 104.07 50.00 93.50 Q35.51 104.07 28.25 87.67 Q10.41 89.59 12.33 71.75 Q-4.07 64.49 6.50 50.00 Q-4.07 35.51 12.33 28.25 Q10.41 10.41 28.25 12.33 Q35.51 -4.07 50.00 6.50Z"/><circle cx="50" cy="50" r="37"/></svg>
+  <div>
+    <span class="seal-value">{{ rating|score }}</span>
+    <span class="seal-label">{% if rating is None %}No responses yet{% else %}{{ rating|grade }}{% endif %}</span>
+  </div>
+</div>

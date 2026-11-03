@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+staticfiles/
+logs/
+media/
+
+# Database dumps hold student data
+*.sql
+*.dump
+*.backup
+
+.vscode/
+.idea/

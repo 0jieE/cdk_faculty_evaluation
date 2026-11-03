@@ -1,0 +1,115 @@
+{% extends "staff/layout.html" %}{% load evaluation_extras humanize %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Dashboard</h1>
+    <p>{% if semester %}{{ semester.school_year }}, {{ semester.get_semester_display }}. {% if results_released %}Faculty can see their results.{% else %}Results are hidden from faculty until you release them in Settings.{% endif %}{% else %}No semester is active, so students can't evaluate yet.{% endif %}</p>
+  </div>
+  {% if semester %}
+  <div class="row">
+    <a class="btn" href="{% url 'staff:results' %}">View results</a>
+    <a class="btn btn-primary" href="{% url 'staff:class_add' %}"><svg class="icon"><use href="#i-plus"/></svg>Add a class</a>
+  </div>
+  {% endif %}
+</div>
+
+{% if not semester %}
+  <div class="panel empty">
+    <h3>Start a semester</h3>
+    <p>Add the semester (or pick an existing one) and mark it active. Students then see their classes for that semester.</p>
+    <a class="btn btn-primary" href="{% url 'staff:records' 'semesters' %}">Go to semesters</a>
+  </div>
+{% else %}
+<section class="kpis" aria-label="This semester at a glance">
+  <div class="kpi kpi-progress">
+    <div class="kpi-label">Evaluations submitted</div>
+    <div class="kpi-value"><span class="num">{{ submitted|intcomma }}</span> <span class="kpi-of">of {{ expected|intcomma }}</span></div>
+    <div class="meter" role="img" aria-label="{{ progress }}% submitted"><span style="width: {{ progress }}%"></span></div>
+    <div class="kpi-note"><strong>{{ progress }}%</strong> complete, {{ remaining|intcomma }} still to go</div>
+  </div>
+  <a class="kpi" href="{% url 'staff:students' %}">
+    <div class="kpi-label">Students</div>
+    <div class="kpi-value num">{{ student_count|intcomma }}</div>
+    <div class="kpi-note">can sign in</div>
+  </a>
+  <a class="kpi" href="{% url 'staff:faculty' %}">
+    <div class="kpi-label">Faculty</div>
+    <div class="kpi-value num">{{ faculty_count }}</div>
+    <div class="kpi-note">{{ overview|length }} teaching this semester</div>
+  </a>
+  <a class="kpi" href="{% url 'staff:classes' %}">
+    <div class="kpi-label">Classes</div>
+    <div class="kpi-value num">{{ class_count }}</div>
+    <div class="kpi-note">{% if empty_classes %}{{ empty_classes }} without students{% else %}all have students{% endif %}</div>
+  </a>
+  <a class="kpi" href="{% url 'staff:questionnaire' %}">
+    <div class="kpi-label">Questions</div>
+    <div class="kpi-value num">{{ is_count|add:ras_count }}</div>
+    <div class="kpi-note">{{ is_count }} inventory, {{ ras_count }} appraisal</div>
+  </a>
+</section>
+
+<div class="dash-grid">
+  <section class="dash-main" aria-labelledby="faculty-title">
+    <div class="section-head">
+      <h2 id="faculty-title">Faculty this semester</h2>
+      <a href="{% url 'staff:results' %}">All results</a>
+    </div>
+    {% include "staff/includes/faculty_overview.html" %}
+  </section>
+
+  <aside class="dash-side">
+    <section class="card" aria-labelledby="attention-title">
+      <h2 id="attention-title" class="card-title">Needs attention</h2>
+      {% if needs_attention %}
+      <ul class="todo">
+        {% if not is_count or not ras_count %}
+        <li><svg class="icon"><use href="#i-alert"/></svg><span>The questionnaire is {% if not is_count and not ras_count %}empty{% else %}incomplete{% endif %}, so students can't submit. <a href="{% url 'staff:questionnaire' %}">Set it up</a></span></li>
+        {% endif %}
+        {% if empty_classes %}
+        <li><svg class="icon"><use href="#i-alert"/></svg><span>{{ empty_classes }} class{{ empty_classes|pluralize:"es" }} ha{{ empty_classes|pluralize:"s,ve" }} no students enrolled. <a href="{% url 'staff:classes' %}">Review classes</a></span></li>
+        {% endif %}
+        {% if duplicate_ids %}
+        <li><svg class="icon"><use href="#i-alert"/></svg><span>{{ duplicate_ids }} ID number{{ duplicate_ids|pluralize }} {{ duplicate_ids|pluralize:"is,are" }} shared by more than one student account. <a href="{% url 'staff:students' %}?status=duplicates">Review duplicates</a></span></li>
+        {% endif %}
+      </ul>
+      {% else %}
+      <p class="all-clear"><svg class="icon"><use href="#i-check"/></svg>Everything is set up for this semester.</p>
+      {% endif %}
+    </section>
+
+    {% if programs %}
+    <section class="card" aria-labelledby="programs-title">
+      <h2 id="programs-title" class="card-title">Progress by program</h2>
+      <ul class="progress-list">
+        {% for program, pct in programs %}
+        <li>
+          <div class="row-between"><span class="name" title="{{ program.program_name }}">{{ program.short_name }}</span><span class="small muted num">{{ program.submitted|intcomma }} of {{ program.expected|intcomma }}, <strong>{{ pct }}%</strong></span></div>
+          <div class="meter" role="img" aria-label="{{ program.short_name }}: {{ pct }}% submitted"><span style="width: {{ pct }}%"></span></div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <section class="card" aria-labelledby="recent-title">
+      <h2 id="recent-title" class="card-title">Latest submissions</h2>
+      {% if recent %}
+      <ul class="activity">
+        {% for e in recent %}
+        <li>
+          <a href="{% url 'staff:class_results' e.faculty_class_id %}">{{ e.faculty_class.subject.subject_code }}, {{ e.faculty_class.program.short_name }} {{ e.faculty_class.year_level.year_level }}{{ e.faculty_class.section.section }}</a>
+          <span class="who">{{ e.faculty_class.faculty.user|full_name }}</span>
+          <time datetime="{{ e.submitted_at|date:'c' }}" title="{{ e.submitted_at|date:'M j, Y, g:i A' }}">{{ e.submitted_at|naturaltime }}</time>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="muted">No evaluations yet this semester. They appear here as students submit.</p>
+      {% endif %}
+    </section>
+  </aside>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}{% load static evaluation_extras %}
+{% block body %}
+{% include "includes/icons.html" %}
+<div class="shell">
+  <aside class="sidebar" id="sidebar" data-open="false" aria-label="Staff menu">
+    <a class="brand" href="{% url 'staff:dashboard' %}">
+      <img src="{% static 'img/cdk_logo.jpg' %}" alt="">
+      <span><strong>Faculty evaluation</strong><span>Colegio de Kidapawan</span></span>
+    </a>
+
+    <nav class="nav" aria-label="Staff">
+      <div class="nav-group">
+        <a href="{% url 'staff:dashboard' %}" {% if section == "dashboard" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-dashboard"/></svg>Dashboard</a>
+        <a href="{% url 'staff:results' %}" {% if section == "results" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-results"/></svg>Results</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">People</div>
+        <a href="{% url 'staff:students' %}" {% if section == "students" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-students"/></svg>Students</a>
+        <a href="{% url 'staff:faculty' %}" {% if section == "faculty" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-faculty"/></svg>Faculty</a>
+        {% if request.user.is_superuser %}<a href="{% url 'staff:accounts' %}" {% if section == "accounts" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-shield"/></svg>Staff accounts</a>{% endif %}
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">Classes and questions</div>
+        <a href="{% url 'staff:classes' %}" {% if section == "classes" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-classes"/></svg>Classes</a>
+        <a href="{% url 'staff:records' 'subjects' %}" {% if section == "subjects" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-subjects"/></svg>Subjects</a>
+        <a href="{% url 'staff:questionnaire' %}" {% if section == "questionnaire" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-questionnaire"/></svg>Questionnaire</a>
+      </div>
+      <div class="nav-group">
+        <div class="nav-title">School records</div>
+        <a href="{% url 'staff:records' 'semesters' %}" {% if section == "semesters" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-calendar"/></svg>Semesters</a>
+        <a href="{% url 'staff:records' 'school-years' %}" {% if section == "school-years" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-calendar-range"/></svg>School years</a>
+        <a href="{% url 'staff:records' 'departments' %}" {% if section == "departments" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-building"/></svg>Departments</a>
+        <a href="{% url 'staff:records' 'programs' %}" {% if section == "programs" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-layers"/></svg>Programs</a>
+        <a href="{% url 'staff:records' 'year-levels' %}" {% if section == "year-levels" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-steps"/></svg>Year levels</a>
+        <a href="{% url 'staff:records' 'sections' %}" {% if section == "sections" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-group"/></svg>Sections</a>
+      </div>
+      <div class="nav-group">
+        <a href="{% url 'staff:settings' %}" {% if section == "settings" %}aria-current="page"{% endif %}><svg class="icon"><use href="#i-settings"/></svg>Settings</a>
+      </div>
+    </nav>
+  </aside>
+  <div class="scrim" data-menu-toggle aria-controls="sidebar"></div>
+
+  <div class="workspace">
+    <header class="appbar">
+      <button class="appbar-btn menu-button" type="button" data-menu-toggle aria-controls="sidebar" aria-expanded="false">
+        <svg class="icon"><use href="#i-menu"/></svg><span class="visually-hidden">Menu</span>
+      </button>
+
+      <form class="appbar-search" method="get" action="{% url 'staff:search' %}" role="search" data-search>
+        <svg class="icon"><use href="#i-search"/></svg>
+        <label class="visually-hidden" for="global-q">Search students, faculty and classes</label>
+        <input id="global-q" name="q" type="search" value="{{ search_q|default:'' }}" autocomplete="off"
+               placeholder="Search students, faculty and classes"
+               hx-get="{% url 'staff:search' %}" hx-trigger="input changed delay:250ms, search"
+               hx-target="#search-pop" hx-swap="innerHTML" hx-push-url="false">
+        <div class="search-pop" id="search-pop" aria-live="polite"></div>
+      </form>
+
+      {% if current_semester %}
+      <a class="term-chip" href="{% url 'staff:records' 'semesters' %}" title="Change the active semester">
+        <span class="dot" aria-hidden="true"></span>
+        <span><strong>{{ current_semester.school_year }}, {{ current_semester.get_semester_display }}</strong><span>Evaluation open</span></span>
+      </a>
+      {% else %}
+      <a class="term-chip term-off" href="{% url 'staff:records' 'semesters' %}">
+        <span class="dot" aria-hidden="true"></span>
+        <span><strong>No active semester</strong><span>Set one to open evaluation</span></span>
+      </a>
+      {% endif %}
+
+      <details class="usermenu" data-usermenu>
+        <summary>
+          <span class="avatar" aria-hidden="true">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</span>
+          <span class="who"><strong>{{ request.user|full_name }}</strong><span>{% if request.user.is_superuser %}Administrator{% else %}Staff{% endif %}{% if is_faculty_user %} and faculty{% endif %}</span></span>
+          <svg class="icon chevron"><use href="#i-chevron"/></svg>
+        </summary>
+        <div class="menu">
+          {% if is_faculty_user %}<a href="{% url 'faculty:home' %}"><svg class="icon"><use href="#i-results"/></svg>My evaluation results</a>{% endif %}
+          {% if request.user.is_superuser %}<a href="{% url 'admin:index' %}" hx-boost="false"><svg class="icon"><use href="#i-external"/></svg>Django admin</a>{% endif %}
+          <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit"><svg class="icon"><use href="#i-logout"/></svg>Sign out</button></form>
+        </div>
+      </details>
+    </header>
+
+    <main class="main" id="main">
+      {% include "includes/messages.html" %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}

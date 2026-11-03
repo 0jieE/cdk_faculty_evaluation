@@ -1,0 +1,24 @@
+{% extends "staff/layout.html" %}{% load evaluation_extras %}
+{% block title %}Staff accounts{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Staff accounts</h1><p>People who run the evaluation. Administrators can also manage this list.</p></div>
+  <a class="btn btn-primary" href="{% url 'staff:account_add' %}">Add a staff account</a>
+</div>
+<div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Name</th><th>Username</th><th>Role</th><th>Last signed in</th><th class="actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+    <tbody>
+    {% for a in accounts %}
+      <tr>
+        <td><strong>{{ a|full_name }}</strong>{% if a == request.user %} <span class="muted small">(you)</span>{% endif %}</td>
+        <td>{{ a.username }}</td>
+        <td>{% if a.is_superuser %}<span class="status status-seal">Administrator</span>{% else %}Staff{% endif %}{% if a.is_faculty %}, also faculty{% endif %}{% if not a.is_active %} <span class="status status-off">Sign-in off</span>{% endif %}</td>
+        <td class="nowrap">{{ a.last_login|date:"M j, Y"|default:"Never" }}</td>
+        <td class="actions"><a class="btn btn-sm" href="{% url 'staff:account_edit' a.id %}">Edit</a> <a class="btn btn-sm" href="{% url 'staff:account_password' a.id %}">Password</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

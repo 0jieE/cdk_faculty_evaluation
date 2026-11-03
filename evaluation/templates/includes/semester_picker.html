@@ -1,0 +1,8 @@
+{# GET form that switches ?semester=; keeps other filters out on purpose (they belong to a semester) #}
+<form method="get" class="row no-print">
+  <label class="visually-hidden" for="semester-picker">Semester</label>
+  <select class="select" id="semester-picker" name="semester" onchange="this.form.requestSubmit()">
+    {% for s in semesters %}<option value="{{ s.id }}"{% if s == semester %} selected{% endif %}>{{ s.school_year }}, {{ s.get_semester_display }}{% if s.is_active %} (active){% endif %}</option>{% endfor %}
+  </select>
+  <noscript><button class="btn" type="submit">Show</button></noscript>
+</form>

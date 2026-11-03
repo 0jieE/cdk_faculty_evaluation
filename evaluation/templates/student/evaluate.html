@@ -1,0 +1,103 @@
+{% extends "portal/layout.html" %}{% load evaluation_extras %}
+{% block title %}Evaluate {{ faculty_class.subject.subject_code }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{% url 'student:home' %}">Back to my classes</a>
+<div class="page-head">
+  <div>
+    <h1>{{ faculty_class.faculty.user|full_name }}</h1>
+    <p>{{ faculty_class.subject.subject_code }}, {{ faculty_class.subject.description }}.
+      Your instructor sees the results, never your name.</p>
+  </div>
+</div>
+
+{% if not question_count %}
+  <div class="panel empty">
+    <h3>The questionnaire isn't ready</h3>
+    <p>No questions have been set up for this semester yet. Try again later.</p>
+  </div>
+{% else %}
+<form method="post" data-evaluation novalidate>
+  {% csrf_token %}
+  <div class="eval-progress">
+    <div class="row-between"><span><span data-answered>0</span> of {{ question_count }} answered</span>
+      <span class="small muted">Answer every statement to submit.</span></div>
+    <div class="meter"><span data-answered-meter style="width:0%"></span></div>
+  </div>
+
+  {% if error %}<div class="form-errors" role="alert">{{ error }}</div>{% endif %}
+
+  {% if is_items %}
+  <section class="form-part" aria-labelledby="part-is">
+    <header>
+      <h2 id="part-is">How much do you agree?</h2>
+      <p>1 means you strongly disagree and 5 means you strongly agree. Think only about this class.</p>
+    </header>
+    {% for stmt, picked in is_items %}
+    <div class="question" data-question>
+      <fieldset>
+        <legend><span class="n">{{ forloop.counter }}.</span><span>{{ stmt.statement }}</span></legend>
+        <div class="scale">
+          {% for i in is_scale %}
+          <label><input type="radio" name="is_{{ stmt.id }}" value="{{ i }}"{% if picked == i|stringformat:"s" %} checked{% endif %}><span>{{ i }}</span></label>
+          {% endfor %}
+        </div>
+        <div class="scale-ends" aria-hidden="true"><span>Strongly disagree</span><span>Strongly agree</span></div>
+      </fieldset>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if ras_items %}
+  <section class="form-part" aria-labelledby="part-ras">
+    <header>
+      <h2 id="part-ras">Overall appraisal</h2>
+      <p>Rate from 6 to 10, where 10 is the best. The comment is optional and is shared without your name.</p>
+    </header>
+    {% for stmt, picked, comment in ras_items %}
+    <div class="question" data-question>
+      <fieldset>
+        <legend><span class="n">{{ is_items|length|add:forloop.counter }}.</span><span>{{ stmt.statement }}</span></legend>
+        <div class="scale">
+          {% for i in ras_scale %}
+          <label><input type="radio" name="ras_{{ stmt.id }}" value="{{ i }}"{% if picked == i|stringformat:"s" %} checked{% endif %}><span>{{ i }}</span></label>
+          {% endfor %}
+        </div>
+        <div class="scale-ends" aria-hidden="true"><span>Lowest</span><span>Best</span></div>
+      </fieldset>
+      <label class="visually-hidden" for="comment_{{ stmt.id }}">Comment for your instructor</label>
+      <textarea class="input" id="comment_{{ stmt.id }}" name="comment_{{ stmt.id }}" maxlength="2000"
+                placeholder="Comment for your instructor (optional)">{{ comment }}</textarea>
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  {% if confirming %}
+  <div class="confirm-panel" role="alert" id="confirm-step">
+    <h2>Ready to submit?</h2>
+    <p>Your answers aren't saved yet. Look them over above; once you submit, you can't change them.</p>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit" name="confirmed" value="1">Yes, submit my evaluation</button>
+    </div>
+  </div>
+  {% else %}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">Submit evaluation</button>
+    <span class="small muted">You'll be asked to confirm before anything is saved.</span>
+  </div>
+  {% endif %}
+
+  <dialog class="confirm-dialog" data-confirm-dialog aria-labelledby="confirm-title">
+    <h2 id="confirm-title">Submit your evaluation?</h2>
+    <p>You're rating <strong>{{ faculty_class.faculty.user|full_name }}</strong> for
+      {{ faculty_class.subject.subject_code }}. You answered all {{ question_count }} statements<span data-confirm-overall></span>.</p>
+    <p class="muted">Once submitted, you can't change your answers.</p>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit" name="confirmed" value="1">Yes, submit</button>
+      <button class="btn" type="button" data-dialog-close autofocus>Go back and check</button>
+    </div>
+  </dialog>
+</form>
+{% endif %}
+{% endblock %}

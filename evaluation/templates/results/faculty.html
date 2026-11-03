@@ -1,0 +1,89 @@
+{% extends base_template %}{% load evaluation_extras %}
+{% block title %}{% if own_view %}My results{% else %}{{ faculty.user|full_name }}{% endif %}{% endblock %}
+{% block content %}
+{% if not own_view %}<a class="crumb" href="{% url 'staff:faculty' %}">All faculty</a>{% endif %}
+<div class="page-head">
+  <div>
+    <h1>{% if own_view %}Your evaluation results{% else %}{{ faculty.user|full_name }}{% endif %}</h1>
+    <p>{% if own_view %}{{ faculty.user|full_name }}, {% endif %}{{ faculty.department }}{% if not own_view %}. Signs in as <strong>{{ faculty.user.username }}</strong>{% if not faculty.user.is_active %}, <span class="status status-off">sign-in turned off</span>{% endif %}{% endif %}</p>
+  </div>
+  <div class="row no-print">
+    {% if semesters|length > 1 %}
+    <form method="get" class="row">
+      <label class="visually-hidden" for="semester">Semester</label>
+      <select class="select" id="semester" name="semester" onchange="this.form.requestSubmit()">
+        {% for s in semesters %}<option value="{{ s.id }}"{% if s == semester %} selected{% endif %}>{{ s.school_year }}, {{ s.get_semester_display }}</option>{% endfor %}
+      </select>
+      <noscript><button class="btn" type="submit">Show</button></noscript>
+    </form>
+    {% endif %}
+    {% if summary and summary.classes and released %}
+      <a class="btn" hx-boost="false" href="{% if own_view %}{% url 'faculty:summary_pdf' %}{% else %}{% url 'staff:faculty_pdf' faculty.id %}{% endif %}?semester={{ semester.id }}">Download summary (PDF)</a>
+    {% endif %}
+    {% if not own_view %}
+      <a class="btn" href="{% url 'staff:faculty_edit' faculty.id %}">Edit</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if not released %}
+  <div class="panel empty">
+    <h3>Results aren't released yet</h3>
+    <p>Your school releases evaluation results after the evaluation period closes. You'll see them here then.</p>
+  </div>
+{% elif not semester %}
+  <div class="panel empty"><h3>No semesters yet</h3><p>Results appear here once a semester has classes.</p></div>
+{% elif not summary.classes %}
+  <div class="panel empty">
+    <h3>No classes in {{ semester.school_year }}, {{ semester.get_semester_display }}</h3>
+    <p>{% if own_view %}You had no classes assigned this semester.{% else %}Assign classes to {{ faculty.user.first_name }} from the Classes page.{% endif %}</p>
+    {% if not own_view %}<a class="btn btn-primary" href="{% url 'staff:class_add' %}">Add a class</a>{% endif %}
+  </div>
+{% else %}
+  <section class="panel panel-pad hero" aria-label="Overall rating">
+    {% include "includes/seal.html" with rating=summary.avg_rating %}
+    <div class="hero-text">
+      <h2>{{ semester.school_year }}, {{ semester.get_semester_display }}</h2>
+      <p class="muted">Overall rating across {{ summary.classes|length }} class{{ summary.classes|length|pluralize:"es" }}, weighted by the number of students who answered.</p>
+      <div class="figures">
+        <div class="figure"><strong>{{ summary.evaluators }} of {{ summary.enrolled }}</strong><span>students responded{% if summary.response_rate is not None %} ({{ summary.response_rate }}%){% endif %}</span></div>
+        <div class="figure"><strong>{{ summary.avg_is|score }}</strong><span>average inventory score</span></div>
+        <div class="figure"><strong>{{ summary.avg_ra|score }}</strong><span>average rapid appraisal</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-head"><h2>By class</h2><span class="grade-scale">Outstanding 95+, Very Satisfactory 86+, Satisfactory 80+, Poor 70+, Very Poor below 70</span></div>
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Subject</th><th>Class</th><th class="num">Responses</th><th>Rating (0–100)</th><th>Equivalent</th></tr></thead>
+      <tbody>
+      {% for r in summary.classes %}
+        {% with fc=r.faculty_class %}
+        <tr>
+          <td><a class="row-link" href="{% if own_view %}{% url 'faculty:class' fc.id %}{% else %}{% url 'staff:class_results' fc.id %}{% endif %}">{{ fc.subject.subject_code }}</a><span class="sub">{{ fc.subject.description }}</span></td>
+          <td class="nowrap">{{ fc.program.short_name }} {{ fc.year_level.year_level }}{{ fc.section.section }}</td>
+          <td class="num">{{ r.evaluators }}/{{ r.enrolled }}</td>
+          <td>
+            <div class="bar-cell" title="{{ fc.subject.subject_code }}: {{ r.avg_rating|score }}">
+              <div class="bar-track">{% if r.avg_rating is not None %}<span style="width: {{ r.avg_rating|percent_of:100 }}%"></span>{% endif %}</div>
+              <span class="bar-value">{{ r.avg_rating|score }}</span>
+            </div>
+          </td>
+          <td>{{ r.avg_rating|grade|default:"–" }}</td>
+        </tr>
+        {% endwith %}
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+
+{% if not own_view %}
+<div class="section-head"><h2>Account</h2></div>
+<div class="row no-print">
+  <a class="btn btn-sm" href="{% url 'staff:faculty_password' faculty.id %}">Set a new password</a>
+  <a class="btn btn-sm btn-quiet" href="{% url 'staff:faculty_delete' faculty.id %}">Delete faculty member</a>
+</div>
+{% endif %}
+{% endblock %}

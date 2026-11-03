@@ -1,0 +1,43 @@
+{% extends "staff/layout.html" %}{% load evaluation_extras %}
+{% block title %}Faculty{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Faculty</h1><p>Instructors who are evaluated. Open one to see their results and manage their account.</p></div>
+  <a class="btn btn-primary" href="{% url 'staff:faculty_add' %}">Add a faculty member</a>
+</div>
+
+<form method="get" class="toolbar" role="search"
+      hx-get="{% url 'staff:faculty' %}" hx-trigger="input changed delay:300ms from:#q, change" hx-target="#results" hx-select="#results" hx-swap="outerHTML" hx-push-url="true">
+  <div class="field search"><label for="q">Search</label><input class="input" id="q" name="q" value="{{ q }}" type="search" placeholder="Name or username" autocomplete="off"></div>
+  <div class="field"><label for="f-dept">Department</label>
+    <select class="select" id="f-dept" name="department"><option value="">All</option>
+      {% for d in departments %}<option value="{{ d.id }}"{% if department == d.id %} selected{% endif %}>{{ d.department_name }}</option>{% endfor %}</select></div>
+  <noscript><button class="btn" type="submit">Filter</button></noscript>
+</form>
+
+<div id="results">
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Name</th><th>Department</th><th class="num">Classes</th><th>Rating this semester</th></tr></thead>
+      <tbody>
+      {% for f, s in rows %}
+        <tr>
+          <td><a class="row-link" href="{% url 'staff:faculty_results' f.id %}">{{ f.user.last_name }}, {{ f.user.first_name }}</a><span class="sub">{{ f.user.username }}{% if not f.user.is_active %}, sign-in off{% endif %}{% if f.user.is_staff %}, also staff{% endif %}</span></td>
+          <td>{{ f.department }}</td>
+          <td class="num">{{ s.classes|length|default:"0" }}</td>
+          <td>{% if s and s.avg_rating is not None %}<strong class="num">{{ s.avg_rating|score }}</strong> <span class="muted small">{{ s.avg_rating|grade }}</span>{% else %}<span class="muted">–</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/pagination.html" %}
+  {% else %}
+  <div class="panel empty">
+    {% if q or department %}<h3>No faculty match</h3><p>Try a shorter search or another department.</p><a class="btn" href="{% url 'staff:faculty' %}">Clear filters</a>
+    {% else %}<h3>No faculty yet</h3><p>Add instructors, then assign them classes.</p><a class="btn btn-primary" href="{% url 'staff:faculty_add' %}">Add a faculty member</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

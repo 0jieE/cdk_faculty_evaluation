@@ -1,0 +1,54 @@
+{% extends "staff/layout.html" %}{% load evaluation_extras %}
+{% block title %}{{ fc.subject.subject_code }}{% endblock %}
+{% block content %}
+<a class="crumb" href="{% url 'staff:classes' %}?semester={{ fc.semester_id }}">All classes</a>
+<div class="page-head">
+  <div>
+    <h1>{{ fc.subject.subject_code }}, {{ fc.program.short_name }} {{ fc.year_level.year_level }}{{ fc.section.section }}</h1>
+    <p>{{ fc.subject.description }}. Taught by {{ fc.faculty.user|full_name }}, {{ fc.semester.school_year }}, {{ fc.semester.get_semester_display }}.</p>
+  </div>
+  <div class="row">
+    <a class="btn" href="{% url 'staff:class_results' fc.id %}">Results</a>
+    <a class="btn" href="{% url 'staff:class_edit' fc.id %}">Edit</a>
+  </div>
+</div>
+
+<div class="section-head">
+  <h2>Enrolled students</h2>
+  <span class="small muted">{{ done_count }} of {{ enrollments|length }} evaluated</span>
+</div>
+
+{% if matching %}
+<div class="panel panel-pad row-between" style="margin-bottom:1rem">
+  <p>{{ matching }} regular student{{ matching|pluralize }} in {{ fc.program.short_name }} {{ fc.year_level.year_level }}{{ fc.section.section }} {{ matching|pluralize:"isn't,aren't" }} enrolled yet.</p>
+  <form method="post" action="{% url 'staff:class_enroll_section' fc.id %}">{% csrf_token %}
+    <button class="btn btn-primary" type="submit">Enroll {{ matching }} student{{ matching|pluralize }}</button></form>
+</div>
+{% endif %}
+
+{% if enrollments %}
+<div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Student</th><th>ID number</th><th>Evaluation</th><th class="actions"><span class="visually-hidden">Remove</span></th></tr></thead>
+    <tbody>
+    {% for e, done in enrollments %}
+      <tr>
+        <td><a class="row-link" href="{% url 'staff:student' e.student_id %}">{{ e.student.user.last_name }}, {{ e.student.user.first_name }}</a></td>
+        <td class="num">{{ e.student.id_number }}</td>
+        <td>{% if done %}<span class="status status-done">Evaluated</span>{% else %}<span class="status status-pending">Not yet</span>{% endif %}</td>
+        <td class="actions">{% if not done %}
+          <form method="post" action="{% url 'staff:class_unenroll' fc.id e.id %}">{% csrf_token %}
+            <button class="btn btn-sm btn-quiet" type="submit" data-confirm="Remove {{ e.student.user.first_name }} {{ e.student.user.last_name }} from this class?">Remove</button></form>
+        {% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="panel empty"><h3>No students enrolled</h3><p>Enroll the whole section with the button above, or add irregular students from their student page.</p></div>
+{% endif %}
+
+<div class="section-head"><h2>Delete</h2></div>
+<a class="btn btn-sm btn-quiet" href="{% url 'staff:class_delete' fc.id %}">Delete class</a>
+{% endblock %}

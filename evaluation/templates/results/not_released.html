@@ -1,0 +1,9 @@
+{% extends base_template %}
+{% block title %}Results not released{% endblock %}
+{% block content %}
+<div class="panel empty">
+  <h3>Results aren't released yet</h3>
+  <p>Your school releases evaluation results after the evaluation period closes. Reports can be downloaded then.</p>
+  <a class="btn" href="{% url 'faculty:home' %}">Back to my results</a>
+</div>
+{% endblock %}

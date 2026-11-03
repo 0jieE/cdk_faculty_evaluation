@@ -1,0 +1,42 @@
+{% extends "staff/layout.html" %}
+{% block title %}{{ record.title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>{{ record.title }}</h1>{% if record.intro %}<p>{{ record.intro }}</p>{% endif %}</div>
+  <a class="btn btn-primary" href="{% url 'staff:record_add' kind %}">Add a {{ record.singular }}</a>
+</div>
+
+{% if record.search and page.paginator.count > 10 or q %}
+<form method="get" class="toolbar" role="search"
+      hx-get="{% url 'staff:records' kind %}" hx-trigger="input changed delay:300ms from:#q" hx-target="#results" hx-select="#results" hx-swap="outerHTML" hx-push-url="true">
+  <div class="field search"><label for="q">Search</label><input class="input" id="q" type="search" name="q" value="{{ q }}" autocomplete="off"></div>
+  <noscript><button class="btn" type="submit">Search</button></noscript>
+</form>
+{% endif %}
+
+<div id="results">
+  {% if rows %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr>{% for h in headings %}<th>{{ h }}</th>{% endfor %}<th class="actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+      <tbody>
+      {% for obj, cells in rows %}
+        <tr>
+          {% for c in cells %}<td>{% if forloop.first %}<strong>{{ c }}</strong>{% elif c == "Active" %}<span class="status status-done">Active</span>{% else %}{{ c }}{% endif %}</td>{% endfor %}
+          <td class="actions"><a class="btn btn-sm" href="{% url 'staff:record_edit' kind obj.pk %}">Edit</a>
+            <a class="btn btn-sm btn-quiet" href="{% url 'staff:record_delete' kind obj.pk %}">Delete</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/pagination.html" %}
+  {% else %}
+  <div class="panel empty">
+    {% if q %}<h3>Nothing matches “{{ q }}”</h3><p>Try a shorter search.</p>
+    {% else %}<h3>No {{ record.title|lower }} yet</h3><p>Add the first one to use it elsewhere in the system.</p>
+      <a class="btn btn-primary" href="{% url 'staff:record_add' kind %}">Add a {{ record.singular }}</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

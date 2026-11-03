@@ -1,0 +1,17 @@
+{% extends "staff/layout.html" %}
+{% block title %}{% if obj %}Edit class{% else %}Add a class{% endif %}{% endblock %}
+{% block content %}
+<a class="crumb" href="{% if obj %}{% url 'staff:class' obj.id %}{% else %}{% url 'staff:classes' %}{% endif %}">Back</a>
+<div class="page-head"><div>
+  <h1>{% if obj %}Edit {{ obj.subject.subject_code }}{% else %}Add a class{% endif %}</h1>
+  <p>Missing a subject or section? Add it under <a href="{% url 'staff:records' 'subjects' %}">Subjects</a> or <a href="{% url 'staff:records' 'sections' %}">Sections</a> first.</p>
+</div></div>
+<form method="post" class="panel panel-pad">
+  {% csrf_token %}
+  {% include "includes/form_fields.html" %}
+  <div class="form-actions">
+    <button class="btn btn-primary" type="submit">{% if obj %}Save changes{% else %}Add class{% endif %}</button>
+    <a class="btn btn-quiet" href="{% if obj %}{% url 'staff:class' obj.id %}{% else %}{% url 'staff:classes' %}{% endif %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

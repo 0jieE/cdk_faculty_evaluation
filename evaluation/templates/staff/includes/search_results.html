@@ -1,0 +1,44 @@
+{% load evaluation_extras %}
+{% if q|length >= 2 %}
+<div class="search-results">
+  {% if found %}
+    {% with students=groups.students.0 student_total=groups.students.1 %}{% if student_total %}
+    <div class="search-group">
+      <div class="search-group-head"><span>Students</span>{% if student_total > limit %}<a href="{% url 'staff:students' %}?q={{ q|urlencode }}&status=all">All {{ student_total }}</a>{% endif %}</div>
+      {% for s in students %}
+      <a class="search-hit" href="{% url 'staff:student' s.id %}">
+        <svg class="icon"><use href="#i-students"/></svg>
+        <span><strong>{{ s.user.last_name }}, {{ s.user.first_name }}</strong><span>{{ s.id_number }}, {{ s.program.short_name }} {{ s.year.year_level }}{{ s.section.section }}{% if not s.user.is_active %}, sign-in off{% endif %}</span></span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}{% endwith %}
+
+    {% with faculty=groups.faculty.0 faculty_total=groups.faculty.1 %}{% if faculty_total %}
+    <div class="search-group">
+      <div class="search-group-head"><span>Faculty</span>{% if faculty_total > limit %}<a href="{% url 'staff:faculty' %}?q={{ q|urlencode }}">All {{ faculty_total }}</a>{% endif %}</div>
+      {% for f in faculty %}
+      <a class="search-hit" href="{% url 'staff:faculty_results' f.id %}">
+        <svg class="icon"><use href="#i-faculty"/></svg>
+        <span><strong>{{ f.user|full_name }}</strong><span>{{ f.department }}</span></span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}{% endwith %}
+
+    {% with classes=groups.classes.0 class_total=groups.classes.1 %}{% if class_total %}
+    <div class="search-group">
+      <div class="search-group-head"><span>Classes this semester</span>{% if class_total > limit %}<a href="{% url 'staff:classes' %}?q={{ q|urlencode }}">All {{ class_total }}</a>{% endif %}</div>
+      {% for c in classes %}
+      <a class="search-hit" href="{% url 'staff:class' c.id %}">
+        <svg class="icon"><use href="#i-classes"/></svg>
+        <span><strong>{{ c.subject.subject_code }}, {{ c.program.short_name }} {{ c.year_level.year_level }}{{ c.section.section }}</strong><span>{{ c.subject.description }}, {{ c.faculty.user|full_name }}</span></span>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}{% endwith %}
+  {% else %}
+    <p class="search-empty">Nothing matches “{{ q }}”. Try a last name, an ID number or a subject code.</p>
+  {% endif %}
+</div>
+{% endif %}

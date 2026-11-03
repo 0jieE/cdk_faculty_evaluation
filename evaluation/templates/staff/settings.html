@@ -1,0 +1,10 @@
+{% extends "staff/layout.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Settings</h1><p>Who sees what in the evaluation results.</p></div></div>
+<form method="post" class="panel panel-pad" style="max-width: 44rem">
+  {% csrf_token %}
+  {% include "includes/form_fields.html" %}
+  <div class="form-actions"><button class="btn btn-primary" type="submit">Save settings</button></div>
+</form>
+{% endblock %}

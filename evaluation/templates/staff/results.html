@@ -1,0 +1,15 @@
+{% extends "staff/layout.html" %}
+{% block title %}Results{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Results</h1>
+    <p>Ratings for every instructor, weighted by how many students answered. Open an instructor for class-by-class detail and comments.</p>
+  </div>
+  {% if semesters %}{% include "includes/semester_picker.html" %}{% endif %}
+</div>
+{% if semester %}{% include "staff/includes/faculty_overview.html" %}{% else %}
+<div class="panel empty"><h3>No semesters yet</h3><p>Add a semester to start collecting evaluations.</p>
+  <a class="btn btn-primary" href="{% url 'staff:record_add' 'semesters' %}">Add a semester</a></div>
+{% endif %}
+{% endblock %}

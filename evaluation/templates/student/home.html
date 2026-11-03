@@ -1,0 +1,53 @@
+{% extends "portal/layout.html" %}{% load evaluation_extras %}
+{% block title %}My classes{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Hi, {{ request.user.first_name }}</h1>
+    {% if semester %}
+      <p>{{ semester.school_year }}, {{ semester.get_semester_display }}.
+      {% if classes %}You have evaluated {{ done_count }} of {{ total }} classes.{% endif %}</p>
+    {% endif %}
+  </div>
+</div>
+
+{% if not semester %}
+  <div class="panel empty">
+    <h3>Evaluation isn't open</h3>
+    <p>There is no active semester right now. Check back when your school announces the evaluation period.</p>
+  </div>
+{% elif not classes %}
+  <div class="panel empty">
+    <h3>No classes to evaluate</h3>
+    <p>You aren't enrolled in any classes for this semester yet. If that's wrong, ask the registrar or your program head to enroll you.</p>
+  </div>
+{% else %}
+  {% if done_count < total %}
+  <div class="meter" style="margin-bottom: 1.5rem;" role="img" aria-label="{{ done_count }} of {{ total }} evaluated">
+    <span style="width: {{ done_count|percent_of:total }}%"></span>
+  </div>
+  {% endif %}
+  <ul class="class-list">
+    {% for fc, done in classes %}
+    <li class="class-item{% if not done %} is-pending{% endif %}">
+      <div class="what">
+        <div class="code">{{ fc.subject.subject_code }}</div>
+        <div class="desc">{{ fc.subject.description }}</div>
+        <div class="who">{{ fc.faculty.user|full_name }}, {{ fc.program.short_name }} {{ fc.year_level.year_level }}{{ fc.section.section }}</div>
+      </div>
+      {% if done %}
+        <span class="status status-done">
+          <svg class="icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5 8.5 14 15 6.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Evaluated
+        </span>
+      {% else %}
+        <a class="btn btn-primary" href="{% url 'student:evaluate' fc.id %}">Evaluate {{ fc.subject.subject_code }}</a>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% if done_count == total %}
+  <p class="muted" style="margin-top: 1.5rem;">All done for this semester. Thank you for your feedback.</p>
+  {% endif %}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "staff/layout.html" %}{% load evaluation_extras %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Students</h1><p>Search by name or ID number. Open a student to manage their classes.</p></div>
+  <a class="btn btn-primary" href="{% url 'staff:student_add' %}">Add a student</a>
+</div>
+
+<form method="get" class="toolbar" role="search"
+      hx-get="{% url 'staff:students' %}" hx-trigger="input changed delay:300ms from:#q, change" hx-target="#results" hx-select="#results" hx-swap="outerHTML" hx-push-url="true">
+  <div class="field search"><label for="q">Search</label><input class="input" id="q" name="q" value="{{ q }}" type="search" placeholder="e.g. Dela Cruz or 2023-0001" autocomplete="off"></div>
+  <div class="field"><label for="f-program">Program</label>
+    <select class="select" id="f-program" name="program"><option value="">All</option>
+      {% for p in programs %}<option value="{{ p.id }}"{% if filters.program == p.id %} selected{% endif %}>{{ p.short_name }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="f-year">Year</label>
+    <select class="select" id="f-year" name="year"><option value="">All</option>
+      {% for y in years %}<option value="{{ y.id }}"{% if filters.year == y.id %} selected{% endif %}>{{ y.year_level }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="f-section">Section</label>
+    <select class="select" id="f-section" name="section"><option value="">All</option>
+      {% for s in sections %}<option value="{{ s.id }}"{% if filters.section == s.id %} selected{% endif %}>{{ s.section }}</option>{% endfor %}</select></div>
+  <div class="field"><label for="f-status">Status</label>
+    <select class="select" id="f-status" name="status">
+      <option value="active"{% if status == "active" %} selected{% endif %}>Can sign in</option>
+      <option value="inactive"{% if status == "inactive" %} selected{% endif %}>Turned off</option>
+      <option value="all"{% if status == "all" %} selected{% endif %}>Everyone</option>
+      <option value="duplicates"{% if status == "duplicates" %} selected{% endif %}>Duplicate ID numbers</option></select></div>
+  <noscript><button class="btn" type="submit">Filter</button></noscript>
+</form>
+
+<div id="results">
+  {% if page.object_list %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead><tr><th>Name</th><th>ID number</th><th>Program and section</th><th>Type</th><th>{% if semester %}Evaluated this semester{% else %}Classes{% endif %}</th></tr></thead>
+      <tbody>
+      {% for s in page %}
+        <tr>
+          <td><a class="row-link" href="{% url 'staff:student' s.id %}">{{ s.user.last_name }}, {{ s.user.first_name }}</a>{% if not s.user.is_active %}<span class="sub">Sign-in off</span>{% endif %}</td>
+          <td class="num">{{ s.id_number }}</td>
+          <td class="nowrap">{{ s.program.short_name }} {{ s.year.year_level }}{{ s.section.section }}</td>
+          <td>{% if s.is_regular %}Regular{% else %}Irregular{% endif %}</td>
+          <td>
+            {% if not s.class_count %}<span class="status status-off">No classes</span>
+            {% elif s.done_count >= s.class_count %}<span class="status status-done">{{ s.done_count }} of {{ s.class_count }}, done</span>
+            {% else %}<span class="status status-pending">{{ s.done_count }} of {{ s.class_count }}</span>{% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "includes/pagination.html" %}
+  {% else %}
+  <div class="panel empty">
+    {% if status == "duplicates" and not q and not filters.program and not filters.year and not filters.section %}
+      <h3>No duplicate ID numbers</h3><p>Every student account has its own ID number.</p>
+    {% elif q or filters.program or filters.year or filters.section %}
+      <h3>No students match</h3><p>Try fewer filters or a shorter search.</p>
+      <a class="btn" href="{% url 'staff:students' %}">Clear filters</a>
+    {% else %}
+      <h3>No students yet</h3><p>Add students one by one, or let them register from the sign-in page.</p>
+      <a class="btn btn-primary" href="{% url 'staff:student_add' %}">Add a student</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
